@@ -303,7 +303,7 @@ If the project later adopts Supabase CLI migrations, first add and validate a pr
    | Build command | `npm run build` |
    | Output directory | `dist` |
 
-   These values come from `package.json` and `vite.config.ts`; there is no custom Vercel configuration in the project.
+   These values come from `package.json` and `vite.config.ts`; `vercel.json` adds only the SPA fallback rewrite described in Section 9.
 
 5. Add the two frontend variables from [Section 5](#5-environment-variables). Use the production Supabase project's URL and publishable key.
 6. Choose **Deploy** and wait for the build to complete. If the build fails, open the Vercel deployment logs and compare the root directory, environment variables, Node version, and build command with this guide.
@@ -322,7 +322,7 @@ The app uses `BrowserRouter` from `react-router` in [`src/main.tsx`](src/main.ts
 
 Dashboard, wallets, exchange, transactions/history, and profile/settings are selected inside the customer app; they are not declared as routes such as `/dashboard`, `/exchange`, or `/transactions`. Do not tell demo users that those tab names are standalone URLs.
 
-Because this is a `BrowserRouter` SPA, the web host must return `index.html` for app routes on a direct browser refresh. Deploy and test `/admin` and `/reset-password` by pasting each URL directly into a new tab. If Vercel returns a 404 rather than serving the SPA entry point, add a Vercel rewrite configuration such as the following at the repository root, then redeploy:
+Because this is a `BrowserRouter` SPA, the web host must return `index.html` for app routes on a direct browser refresh. The repository now includes this Vercel rewrite at its root; it was needed because `/admin` returned a 404 when requested directly before the rewrite was deployed:
 
 ```json
 {
@@ -332,7 +332,7 @@ Because this is a `BrowserRouter` SPA, the web host must return `index.html` for
 }
 ```
 
-This file is not currently present; do not add it unless direct-route testing shows it is needed.
+Direct production requests to `/admin` and `/reset-password` were checked after deploying this rewrite and loaded the React app.
 
 ## 10. Supabase Authentication Configuration
 
@@ -499,7 +499,7 @@ Resolve these before making the repository public or describing OIMES as a produ
 3. Vite outputs to `dist`; `vite.config.ts` sets React and Tailwind plugins and has no custom base path or server rewrites.
 4. Frontend configuration uses exactly `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. No other frontend environment variables are referenced.
 5. The repository has `.env`, `.env.example`, and `env.test`. The `.env.example` values are placeholders. During deployment preparation, `.env` and `env.test` were removed from the Git index, and `.gitignore` was updated to ignore local env files/build artifacts while allowing `.env.example`. Verify the Git status before committing these changes.
-6. The SQL layout is `supabase/schema.sql` plus flat migrations `002` through `016`; there is no `001`, `supabase/migrations/`, `config.toml`, `vercel.json`, or edge-function directory.
+6. The SQL layout is `supabase/schema.sql` plus flat migrations `002` through `016`; there is no `001`, `supabase/migrations/`, `config.toml`, or edge-function directory. Root `vercel.json` supplies the SPA fallback rewrite required for direct browser routes.
 7. Customer Auth uses Supabase email/password sign-up/sign-in, confirmation-aware UI, logout, password update, and password reset. The admin portal uses a separate Supabase client/session, has no signup screen, and checks the stored user role.
 8. Top-level routes are `/admin/*`, `/reset-password`, and the customer catch-all. Customer tabs are component state, not URL routes. The app uses `BrowserRouter`.
 9. The database has nine public application tables after migrations. No explicit custom `CREATE INDEX` statements were found; primary/unique constraints provide their own indexes.
